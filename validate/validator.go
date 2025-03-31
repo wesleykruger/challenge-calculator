@@ -12,7 +12,23 @@ import (
 
 var inputDelimiter = []rune{',', '\n'}
 
-func SanitizeInput(input string) ([]decimal.Decimal, error) {
+func ValidateInput(input string) ([]decimal.Decimal, error) {
+	logger.Debug(fmt.Sprintf("Starting input validation: %s", input))
+
+	sanitizedValues, err := sanitizeInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	negativeNumbers := findNegativeNumbers(sanitizedValues)
+	if len(negativeNumbers) > 0 {
+		return nil, fmt.Errorf("invalid input: negative numbers found: %s", strings.Join(negativeNumbers, ", "))
+	}
+
+	return sanitizedValues, nil
+}
+
+func sanitizeInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input sanitization: %s", input))
 
 	if len(strings.TrimSpace(input)) == 0 {
@@ -61,4 +77,14 @@ func parseDecimal(val string) decimal.Decimal {
 
 func UnescapeNewline(input string) string {
 	return strings.ReplaceAll(input, "\\n", "\n")
+}
+
+func findNegativeNumbers(numbers []decimal.Decimal) []string {
+	var negativeNumbers []string
+	for _, number := range numbers {
+		if number.Sign() == -1 {
+			negativeNumbers = append(negativeNumbers, number.String())
+		}
+	}
+	return negativeNumbers
 }

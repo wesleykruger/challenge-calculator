@@ -6,7 +6,6 @@ A simple calculator that adds numbers from a string input.
 
 - Adds numbers from a string input
 - Handles decimal numbers
-- Handles negative numbers
 - Handles empty input
 - Handles invalid input
 - Handles missing numbers
@@ -25,7 +24,7 @@ This calculator uses the `github.com/shopspring/decimal` library for all numeric
 
 The calculator accepts input in the following format:
 - Two numbers separated by a comma or a newline character (`\n`)
-- Numbers can be positive or negative
+- Numbers must be positive
 - Numbers can be decimal or whole
 - Empty input is allowed
 - Missing numbers are treated as zero

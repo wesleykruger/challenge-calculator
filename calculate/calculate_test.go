@@ -88,13 +88,19 @@ func TestAdd(t *testing.T) {
 			name:        "negative numbers",
 			input:       "-1,-2",
 			expected:    decimal.NewFromInt(-3),
-			expectedErr: false,
+			expectedErr: true,
 		},
 		{
 			name:        "mixed positive and negative",
 			input:       "5,-3",
 			expected:    decimal.NewFromInt(2),
-			expectedErr: false,
+			expectedErr: true,
+		},
+		{
+			name:        "negative number with newline deliminator",
+			input:       "-1\n-2",
+			expected:    decimal.NewFromInt(-3),
+			expectedErr: true,
 		},
 		{
 			name:        "large numbers",
