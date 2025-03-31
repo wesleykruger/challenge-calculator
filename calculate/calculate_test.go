@@ -105,7 +105,7 @@ func TestAdd(t *testing.T) {
 		{
 			name:        "large numbers",
 			input:       "1000000,2000000",
-			expected:    decimal.NewFromInt(3000000),
+			expected:    decimal.Zero,
 			expectedErr: false,
 		},
 		{
@@ -148,6 +148,12 @@ func TestAdd(t *testing.T) {
 			expected:    decimal.NewFromInt(55),
 			expectedErr: false,
 		},
+		{
+			name:        "mixed large numbers",
+			input:       "1000000,2000000,3\n4",
+			expected:    decimal.NewFromInt(7),
+			expectedErr: false,
+		},
 	}
 
 	for _, test := range tests {
@@ -159,6 +165,77 @@ func TestAdd(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expected, result)
 			}
+		})
+	}
+}
+
+func TestNumberExceedsMaxValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    decimal.Decimal
+		expected bool
+	}{
+		{
+			name:     "number below max",
+			input:    decimal.NewFromInt(999),
+			expected: false,
+		},
+		{
+			name:     "number at max",
+			input:    decimal.NewFromInt(1000),
+			expected: false,
+		},
+		{
+			name:     "number above max",
+			input:    decimal.NewFromInt(1001),
+			expected: true,
+		},
+		{
+			name:     "zero",
+			input:    decimal.Zero,
+			expected: false,
+		},
+		{
+			name:     "negative number",
+			input:    decimal.NewFromInt(-1000),
+			expected: false,
+		},
+		{
+			name:     "negative number below abs max",
+			input:    decimal.NewFromInt(-1001),
+			expected: false,
+		},
+		{
+			name:     "decimal below max",
+			input:    decimal.NewFromFloat(999.99),
+			expected: false,
+		},
+		{
+			name:     "decimal at max",
+			input:    decimal.NewFromFloat(1000.00),
+			expected: false,
+		},
+		{
+			name:     "decimal above max",
+			input:    decimal.NewFromFloat(1000.01),
+			expected: true,
+		},
+		{
+			name:     "very large number",
+			input:    decimal.NewFromInt(1000000),
+			expected: true,
+		},
+		{
+			name:     "very small number",
+			input:    decimal.NewFromFloat(0.0001),
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := numberExceedsMaxValue(test.input)
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }

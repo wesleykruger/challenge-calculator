@@ -25,6 +25,7 @@ This calculator uses the `github.com/shopspring/decimal` library for all numeric
 The calculator accepts input in the following format:
 - Two numbers separated by a comma or a newline character (`\n`)
 - Numbers must be positive
+- Numbers greater than or equal to 1000 will be omitted from the sum
 - Numbers can be decimal or whole
 - Empty input is allowed
 - Missing numbers are treated as zero
