@@ -4,7 +4,7 @@ A simple calculator that adds numbers from a string input.
 
 ## Features
 
-- Adds two numbers from a string input
+- Adds numbers from a string input
 - Handles decimal numbers
 - Handles negative numbers
 - Handles empty input

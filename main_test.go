@@ -51,10 +51,10 @@ func TestMainFunctionality(t *testing.T) {
 				expectedErr: false,
 			},
 			{
-				name:        "too many numbers",
+				name:        "many numbers",
 				input:       "1,2,3",
-				expected:    decimal.Zero,
-				expectedErr: true,
+				expected:    decimal.NewFromInt(6),
+				expectedErr: false,
 			},
 			{
 				name:        "invalid numbers",
