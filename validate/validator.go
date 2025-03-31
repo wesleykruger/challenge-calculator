@@ -24,10 +24,6 @@ func SanitizeInput(input string) ([]decimal.Decimal, error) {
 
 	splitValues := splitInput(input)
 
-	if err := validateNumberOfValues(splitValues); err != nil {
-		return nil, err
-	}
-
 	var sanitizedValues []decimal.Decimal
 	for _, number := range splitValues {
 		convertedNumber := parseDecimal(number)
@@ -48,13 +44,6 @@ func splitInput(input string) []string {
 	}
 
 	return parts
-}
-
-func validateNumberOfValues(values []string) error {
-	if len(values) > maxNumbers {
-		return fmt.Errorf("invalid input, a maximum of %d numbers are allowed, received %d", maxNumbers, len(values))
-	}
-	return nil
 }
 
 func parseDecimal(val string) decimal.Decimal {
