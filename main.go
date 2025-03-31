@@ -8,6 +8,7 @@ import (
 
 	"challenge-calculator/calculate"
 	"challenge-calculator/logger"
+	"challenge-calculator/validate"
 )
 
 var logLevel = flag.String("log", "info", "Set the log level (debug, info, error)")
@@ -21,8 +22,9 @@ func main() {
 
 	for scanner.Scan() {
 		input := scanner.Text()
+		unescapedInput := validate.UnescapeNewline(input)
 
-		result, err := calculate.Add(input)
+		result, err := calculate.Add(unescapedInput)
 		if err != nil {
 			logger.UserMsg(fmt.Sprintf("Error calculating result: %v", err))
 			os.Exit(1)

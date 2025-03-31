@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"challenge-calculator/logger"
@@ -9,7 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const inputDelimiter = ","
+var inputDelimiter = []rune{',', '\n'}
 
 func SanitizeInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input sanitization: %s", input))
@@ -33,7 +34,9 @@ func SanitizeInput(input string) ([]decimal.Decimal, error) {
 
 func splitInput(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
-	parts := strings.Split(trimmedInput, inputDelimiter)
+	parts := strings.FieldsFunc(trimmedInput, func(r rune) bool {
+		return slices.Contains(inputDelimiter, r)
+	})
 
 	// Trim whitespace from each part
 	for i, part := range parts {
@@ -54,4 +57,8 @@ func parseDecimal(val string) decimal.Decimal {
 		return decimal.Zero
 	}
 	return number
+}
+
+func UnescapeNewline(input string) string {
+	return strings.ReplaceAll(input, "\\n", "\n")
 }

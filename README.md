@@ -24,12 +24,12 @@ This calculator uses the `github.com/shopspring/decimal` library for all numeric
 ### Input Format
 
 The calculator accepts input in the following format:
-- Two numbers separated by a comma
+- Two numbers separated by a comma or a newline character (`\n`)
 - Numbers can be positive or negative
 - Numbers can be decimal or whole
 - Empty input is allowed
 - Missing numbers are treated as zero
-- Whitespace is allowed around numbers and commas
+- Whitespace is allowed around numbers and delimiters
 
 ### Logging
 
