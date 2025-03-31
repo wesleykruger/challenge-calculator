@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -40,10 +39,10 @@ func TestSanitizeInput(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "too many numbers",
+			name:        "many numbers",
 			input:       "1,2,3",
-			expected:    nil,
-			expectedErr: fmt.Errorf("invalid input, a maximum of %d numbers are allowed, received %d", maxNumbers, 3),
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2), decimal.NewFromInt(3)},
+			expectedErr: nil,
 		},
 		{
 			name:        "negative number",
@@ -173,92 +172,6 @@ func TestSplitInput(t *testing.T) {
 		})
 	}
 }
-
-func TestValidateNumberOfValues(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       []string
-		expectedErr error
-	}{
-		{
-			name:        "single number",
-			input:       []string{"20"},
-			expectedErr: nil,
-		},
-		{
-			name:        "empty string",
-			input:       []string{""},
-			expectedErr: nil,
-		},
-		{
-			name:        "two numbers",
-			input:       []string{"1", "5"},
-			expectedErr: nil,
-		},
-		{
-			name:        "empty slice",
-			input:       []string{},
-			expectedErr: nil,
-		},
-		{
-			name:        "too many numbers",
-			input:       []string{"1", "2", "3"},
-			expectedErr: fmt.Errorf("invalid input, a maximum of %d numbers are allowed, received %d", maxNumbers, 3),
-		},
-		{
-			name:        "nil slice",
-			input:       nil,
-			expectedErr: nil,
-		},
-		{
-			name:        "missing first number",
-			input:       []string{"", "12"},
-			expectedErr: nil,
-		},
-		{
-			name:        "missing second number",
-			input:       []string{"12", ""},
-			expectedErr: nil,
-		},
-		{
-			name:        "missing both numbers",
-			input:       []string{"", ""},
-			expectedErr: nil,
-		},
-		{
-			name:        "invalid number in second position",
-			input:       []string{"5", "tytyt"},
-			expectedErr: nil,
-		},
-		{
-			name:        "invalid number in first position",
-			input:       []string{"tytyt", "5"},
-			expectedErr: nil,
-		},
-		{
-			name:        "decimal numbers",
-			input:       []string{"1.5", "2.7"},
-			expectedErr: nil,
-		},
-		{
-			name:        "negative numbers",
-			input:       []string{"-1", "-2"},
-			expectedErr: nil,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := validateNumberOfValues(test.input)
-			if test.expectedErr != nil {
-				assert.Equal(t, test.expectedErr, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestParseDecimal(t *testing.T) {
 	tests := []struct {
 		name     string

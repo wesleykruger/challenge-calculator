@@ -17,7 +17,7 @@ func main() {
 	logger.SetLogLevel(logger.LogLevel(*logLevel))
 
 	scanner := bufio.NewScanner(os.Stdin)
-	logger.UserMsg("Please enter up to two numbers separated by a comma:")
+	logger.UserMsg("Please enter the numbers to be calculated, separated by a comma:")
 
 	for scanner.Scan() {
 		input := scanner.Text()

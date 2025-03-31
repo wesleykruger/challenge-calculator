@@ -33,10 +33,10 @@ func TestAdd(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name:        "too many numbers",
+			name:        "many numbers",
 			input:       "1,2,3",
-			expected:    decimal.Zero,
-			expectedErr: true,
+			expected:    decimal.NewFromInt(6),
+			expectedErr: false,
 		},
 		{
 			name:        "invalid number format",
@@ -98,6 +98,18 @@ func TestAdd(t *testing.T) {
 			name:        "missing both numbers",
 			input:       ",",
 			expected:    decimal.Zero,
+			expectedErr: false,
+		},
+		{
+			name:        "many numbers",
+			input:       "1,2,3,4,5,6,7,8,9,10",
+			expected:    decimal.NewFromInt(55),
+			expectedErr: false,
+		},
+		{
+			name:        "many numbers with some invalid",
+			input:       "1,2,3,4,5,6,7,8,9,10,abc",
+			expected:    decimal.NewFromInt(55),
 			expectedErr: false,
 		},
 	}
