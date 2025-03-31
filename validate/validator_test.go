@@ -15,6 +15,42 @@ func TestSanitizeInput(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			name:        "valid input with two numbers",
+			input:       "1,2",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expectedErr: nil,
+		},
+		{
+			name:        "newline delimiter",
+			input:       "1\n2",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expectedErr: nil,
+		},
+		{
+			name:        "mixed delimiters",
+			input:       "1\n2,3",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2), decimal.NewFromInt(3)},
+			expectedErr: nil,
+		},
+		{
+			name:        "newline with whitespace",
+			input:       " 1 \n 2 ",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expectedErr: nil,
+		},
+		{
+			name:        "multiple newlines",
+			input:       "1\n\n2",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expectedErr: nil,
+		},
+		{
+			name:        "newline with empty lines",
+			input:       "1\n\n2\n",
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expectedErr: nil,
+		},
+		{
 			name:        "single number",
 			input:       "123",
 			expected:    []decimal.Decimal{decimal.NewFromInt(123)},
@@ -59,19 +95,19 @@ func TestSanitizeInput(t *testing.T) {
 		{
 			name:        "missing first number",
 			input:       ",12",
-			expected:    []decimal.Decimal{decimal.Zero, decimal.NewFromInt(12)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
 			expectedErr: nil,
 		},
 		{
 			name:        "missing second number",
 			input:       "12,",
-			expected:    []decimal.Decimal{decimal.NewFromInt(12), decimal.Zero},
+			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
 			expectedErr: nil,
 		},
 		{
 			name:        "missing both numbers",
 			input:       ",",
-			expected:    []decimal.Decimal{decimal.Zero, decimal.Zero},
+			expected:    nil,
 			expectedErr: nil,
 		},
 		{
@@ -126,22 +162,22 @@ func TestSplitInput(t *testing.T) {
 		{
 			name:     "empty string",
 			input:    "",
-			expected: []string{""},
+			expected: []string{},
 		},
 		{
 			name:     "missing first number",
 			input:    ",12",
-			expected: []string{"", "12"},
+			expected: []string{"12"},
 		},
 		{
 			name:     "missing second number",
 			input:    "12,",
-			expected: []string{"12", ""},
+			expected: []string{"12"},
 		},
 		{
 			name:     "missing both numbers",
 			input:    ",",
-			expected: []string{"", ""},
+			expected: []string{},
 		},
 		{
 			name:     "whitespace handling",
@@ -172,6 +208,7 @@ func TestSplitInput(t *testing.T) {
 		})
 	}
 }
+
 func TestParseDecimal(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -233,6 +270,67 @@ func TestParseDecimal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := parseDecimal(test.input)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestUnescapeNewline(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "single escaped newline",
+			input:    "1\\n2",
+			expected: "1\n2",
+		},
+		{
+			name:     "multiple escaped newlines",
+			input:    "1\\n2\\n3",
+			expected: "1\n2\n3",
+		},
+		{
+			name:     "no escaped newlines",
+			input:    "1,2,3",
+			expected: "1,2,3",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "mixed delimiters",
+			input:    "1\\n2,3",
+			expected: "1\n2,3",
+		},
+		{
+			name:     "escaped newline at start",
+			input:    "\\n1,2",
+			expected: "\n1,2",
+		},
+		{
+			name:     "escaped newline at end",
+			input:    "1,2\\n",
+			expected: "1,2\n",
+		},
+		{
+			name:     "consecutive escaped newlines",
+			input:    "1\\n\\n2",
+			expected: "1\n\n2",
+		},
+		{
+			name:     "escaped newline with whitespace",
+			input:    " 1 \\n 2 ",
+			expected: " 1 \n 2 ",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := UnescapeNewline(test.input)
 			assert.Equal(t, test.expected, result)
 		})
 	}
