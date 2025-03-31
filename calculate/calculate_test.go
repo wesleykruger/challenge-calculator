@@ -15,6 +15,36 @@ func TestAdd(t *testing.T) {
 		expectedErr bool
 	}{
 		{
+			name:        "newline delimiter",
+			input:       "1\n2",
+			expected:    decimal.NewFromInt(3),
+			expectedErr: false,
+		},
+		{
+			name:        "mixed delimiters",
+			input:       "1\n2,3",
+			expected:    decimal.NewFromInt(6),
+			expectedErr: false,
+		},
+		{
+			name:        "newline with whitespace",
+			input:       " 1 \n 2 ",
+			expected:    decimal.NewFromInt(3),
+			expectedErr: false,
+		},
+		{
+			name:        "multiple newlines",
+			input:       "1\n\n2",
+			expected:    decimal.NewFromInt(3),
+			expectedErr: false,
+		},
+		{
+			name:        "newline with empty lines",
+			input:       "1\n\n2\n",
+			expected:    decimal.NewFromInt(3),
+			expectedErr: false,
+		},
+		{
 			name:        "simple addition",
 			input:       "1,2",
 			expected:    decimal.NewFromInt(3),
