@@ -128,6 +128,12 @@ func TestValidateInput(t *testing.T) {
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
 			expectedErr: "",
 		},
+		{
+			name:        "custom multiple delimiters",
+			input:       "//[*][!!][r9r]\n11r9r22*hh*33!!44",
+			expected:    []decimal.Decimal{decimal.NewFromInt(11), decimal.NewFromInt(22), decimal.NewFromInt(33), decimal.NewFromInt(44)},
+			expectedErr: "",
+		},
 	}
 
 	for _, test := range tests {
@@ -657,7 +663,7 @@ func TestCheckForCustomDelimiter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			hasCustomDelimiter, delimiter, err := checkForCustomDelimiter(test.input)
+			hasCustomDelimiter, delimiter, err := checkForCustomDelimiters(test.input)
 			assert.Equal(t, test.expectedHasCustomDelimiter, hasCustomDelimiter)
 			assert.Equal(t, test.expectedDelimiter, delimiter)
 			if test.expectedErr != "" {

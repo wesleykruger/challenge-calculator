@@ -154,6 +154,12 @@ func TestAdd(t *testing.T) {
 			expected:    decimal.NewFromInt(7),
 			expectedErr: false,
 		},
+		{
+			name:        "custom multiple delimiters",
+			input:       "//[*][!!][r9r]\n11r9r22*hh*33!!44",
+			expected:    decimal.NewFromInt(110),
+			expectedErr: false,
+		},
 	}
 
 	for _, test := range tests {

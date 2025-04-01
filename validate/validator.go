@@ -13,7 +13,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var inputDelimiter = []rune{',', '\n'}
+var inputDelimiters = []rune{',', '\n'}
 
 func ValidateInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input validation: %s", input))
@@ -57,48 +57,68 @@ func sanitizeInput(input string) ([]decimal.Decimal, error) {
 }
 
 func handleCustomDelimiter(input string) error {
-	hasCustomDelimiter, customDelimiter, err := checkForCustomDelimiter(input)
+	hasCustomDelimiter, customDelimiters, err := checkForCustomDelimiters(input)
 	if err != nil {
 		return err
 	}
 
 	if hasCustomDelimiter {
-		inputDelimiter = append(inputDelimiter, customDelimiter)
+		inputDelimiters = append(inputDelimiters, customDelimiters...)
 	}
 
 	return nil
 }
 
-func checkForCustomDelimiter(input string) (bool, rune, error) {
-	// Match bracketed format: //[<delimiter>]\n
+func checkForCustomDelimiters(input string) (bool, []rune, error) {
+	// 1. Match multiple delimiters of any length: //[<d1>][<d2>]...\n
+	multi := regexp.MustCompile(`^//(\[.*\])\n`)
+	if multi.MatchString(input) {
+		brackets := regexp.MustCompile(`\[(.+?)\]`)
+		matches := brackets.FindAllStringSubmatch(input, -1)
+
+		if len(matches) == 0 {
+			return false, nil, nil
+		}
+
+		delimiters := make([]rune, 0, len(matches))
+		for _, match := range matches {
+			if match[1] == "" {
+				return false, nil, errors.New("custom delimiter cannot be empty")
+			}
+			delimiters = append(delimiters, []rune(match[1])...)
+		}
+		return true, []rune(delimiters), nil
+	}
+
+	// 2. Match single bracketed format: //[<delimiter>]\n
 	bracketed := regexp.MustCompile(`^//\[(.+)\]\n`)
 	if match := bracketed.FindStringSubmatch(input); len(match) == 2 {
 		if match[1] == "" {
-			return false, 0, errors.New("custom delimiter cannot be empty")
+			return false, nil, errors.New("custom delimiter cannot be empty")
 		}
-		return true, []rune(match[1])[0], nil
+		return true, []rune(match[1]), nil
 	}
 
-	// Match single-char format: //{delimiter}\n
+	// 3. Match single-char format: //{delimiter}\n
 	re := regexp.MustCompile(`^//(.+)\n`)
 	match := re.FindStringSubmatch(input)
 
 	if len(match) <= 1 {
-		return false, 0, nil
+		return false, nil, nil
 	}
 
 	delimiterStr := match[1]
 	if utf8.RuneCountInString(delimiterStr) != 1 {
-		return false, 0, fmt.Errorf("invalid custom delimiter %q", delimiterStr)
+		return false, nil, fmt.Errorf("invalid custom delimiter %q", delimiterStr)
 	}
 
-	return true, []rune(delimiterStr)[0], nil
+	return true, []rune(delimiterStr), nil
 }
 
 func splitInput(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
 	parts := strings.FieldsFunc(trimmedInput, func(r rune) bool {
-		return slices.Contains(inputDelimiter, r)
+		return slices.Contains(inputDelimiters, r)
 	})
 
 	// Trim whitespace from each part
