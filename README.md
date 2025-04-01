@@ -23,7 +23,7 @@ This calculator uses the `github.com/shopspring/decimal` library for all numeric
 ### Input Format
 
 The calculator accepts input in the following format:
-- Two numbers separated by a delimiter
+- Numbers separated by a delimiter
 - Numbers must be positive
 - Numbers greater than or equal to 1000 will be omitted from the sum
 - Numbers can be decimal or whole
@@ -35,7 +35,8 @@ The calculator accepts input in the following format:
 The Calculator accepts input separated by the following delimters:
 - Commas (,)
 - Newline characters ('\n')
-- Custom Delimiters: Supports the use of a single character using the format `//{delimiter}\n{numbers}`
+- Custom Single-Character Delimiters: Supports the use of a single character using the format `//{delimiter}\n{numbers}`
+- Custom Multi-Character Delimiters: Supports the use multiple characters as a single delimiter using the format `//[{delimiter1}][{delimiter2}]...\n{numbers}`
 
 ### Logging
 

@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -69,7 +70,16 @@ func handleCustomDelimiter(input string) error {
 }
 
 func checkForCustomDelimiter(input string) (bool, rune, error) {
-	// Defined as a single character at the start of the input in this format: //{delimiter}\n
+	// Match bracketed format: //[<delimiter>]\n
+	bracketed := regexp.MustCompile(`^//\[(.+)\]\n`)
+	if match := bracketed.FindStringSubmatch(input); len(match) == 2 {
+		if match[1] == "" {
+			return false, 0, errors.New("custom delimiter cannot be empty")
+		}
+		return true, []rune(match[1])[0], nil
+	}
+
+	// Match single-char format: //{delimiter}\n
 	re := regexp.MustCompile(`^//(.+)\n`)
 	match := re.FindStringSubmatch(input)
 
@@ -79,7 +89,7 @@ func checkForCustomDelimiter(input string) (bool, rune, error) {
 
 	delimiterStr := match[1]
 	if utf8.RuneCountInString(delimiterStr) != 1 {
-		return false, 0, fmt.Errorf("invalid custom delimiter %q: must be a single character", delimiterStr)
+		return false, 0, fmt.Errorf("invalid custom delimiter %q", delimiterStr)
 	}
 
 	return true, []rune(delimiterStr)[0], nil
