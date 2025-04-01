@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -13,129 +12,129 @@ func TestValidateInput(t *testing.T) {
 		name        string
 		input       string
 		expected    []decimal.Decimal
-		expectedErr error
+		expectedErr string
 	}{
 		{
 			name:        "valid input with two numbers",
 			input:       "1,2",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "newline delimiter",
 			input:       "1\n2",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "mixed delimiters",
 			input:       "1\n2,3",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2), decimal.NewFromInt(3)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "newline with whitespace",
 			input:       " 1 \n 2 ",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "multiple newlines",
 			input:       "1\n\n2",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "newline with empty lines",
 			input:       "1\n\n2\n",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "single number",
 			input:       "123",
 			expected:    []decimal.Decimal{decimal.NewFromInt(123)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "two numbers",
 			input:       "1,5",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(5)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "empty string",
 			input:       "",
 			expected:    []decimal.Decimal{decimal.Zero},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "mixed positive and negative",
 			input:       "4,-3",
 			expected:    nil,
-			expectedErr: fmt.Errorf("invalid input: negative numbers found: -3"),
+			expectedErr: "invalid input: negative numbers found: -3",
 		},
 		{
 			name:        "many numbers",
 			input:       "1,2,3",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2), decimal.NewFromInt(3)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "negative number",
 			input:       "-123,456",
 			expected:    nil,
-			expectedErr: fmt.Errorf("invalid input: negative numbers found: -123"),
+			expectedErr: "invalid input: negative numbers found: -123",
 		},
 		{
 			name:        "decimal numbers",
 			input:       "123.45,67.89",
 			expected:    []decimal.Decimal{decimal.NewFromFloat(123.45), decimal.NewFromFloat(67.89)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "missing first number",
 			input:       ",12",
 			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "missing second number",
 			input:       "12,",
 			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "missing both numbers",
 			input:       ",",
 			expected:    nil,
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "invalid number in second position",
 			input:       "5,tytyt",
 			expected:    []decimal.Decimal{decimal.NewFromInt(5), decimal.Zero},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "invalid number in first position",
 			input:       "tytyt,5",
 			expected:    []decimal.Decimal{decimal.Zero, decimal.NewFromInt(5)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 		{
 			name:        "whitespace handling",
 			input:       " 1 , 2 ",
 			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
-			expectedErr: nil,
+			expectedErr: "",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := ValidateInput(test.input)
-			if test.expectedErr != nil {
-				assert.Equal(t, test.expectedErr, err)
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
 			} else {
 				assert.Equal(t, test.expected, result)
 				assert.NoError(t, err)
@@ -530,6 +529,152 @@ func TestFindNegativeNumbers(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := findNegativeNumbers(test.input)
 			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCheckForCustomDelimiter(t *testing.T) {
+	tests := []struct {
+		name                       string
+		input                      string
+		expectedDelimiter          rune
+		expectedHasCustomDelimiter bool
+		expectedErr                string
+	}{
+		{
+			name:                       "no custom delimiter",
+			input:                      "1,2",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "",
+		},
+		{
+			name:                       "valid custom delimiter",
+			input:                      "//*\n1*2",
+			expectedDelimiter:          '*',
+			expectedHasCustomDelimiter: true,
+			expectedErr:                "",
+		},
+		{
+			name:                       "custom delimiter with numbers",
+			input:                      "//1\n1,2",
+			expectedDelimiter:          '1',
+			expectedHasCustomDelimiter: true,
+			expectedErr:                "",
+		},
+		{
+			name:                       "custom delimiter with special character",
+			input:                      "//;\n1;2",
+			expectedDelimiter:          ';',
+			expectedHasCustomDelimiter: true,
+			expectedErr:                "",
+		},
+		{
+			name:                       "missing newline after delimiter",
+			input:                      "//*1*2",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "",
+		},
+		{
+			name:                       "empty input",
+			input:                      "",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "",
+		},
+		{
+			name:                       "only delimiter definition",
+			input:                      "//*\n",
+			expectedDelimiter:          '*',
+			expectedHasCustomDelimiter: true,
+			expectedErr:                "",
+		},
+		{
+			name:                       "delimiter not at start",
+			input:                      "1,2//*\n3*4",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "",
+		},
+		{
+			name:                       "multiple forward slashes",
+			input:                      "///\n1/2",
+			expectedDelimiter:          '/',
+			expectedHasCustomDelimiter: true,
+			expectedErr:                "",
+		},
+		{
+			name:                       "whitespace in delimiter definition",
+			input:                      "// *\n1*2",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "invalid custom delimiter \" *\": must be a single character",
+		},
+		{
+			name:                       "multiple delimiters",
+			input:                      "//[*][%]\n1*2%3",
+			expectedDelimiter:          0,
+			expectedHasCustomDelimiter: false,
+			expectedErr:                "invalid custom delimiter \"[*][%]\": must be a single character",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			hasCustomDelimiter, delimiter, err := checkForCustomDelimiter(test.input)
+			assert.Equal(t, test.expectedHasCustomDelimiter, hasCustomDelimiter)
+			assert.Equal(t, test.expectedDelimiter, delimiter)
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestHandleCustomDelimiter(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expectedErr string
+	}{
+		{
+			name:        "no custom delimiter",
+			input:       "1,2",
+			expectedErr: "",
+		},
+		{
+			name:        "valid custom delimiter",
+			input:       "//*\n1*2",
+			expectedErr: "",
+		},
+		{
+			name:        "invalid custom delimiter",
+			input:       "//[*][%]\n1*2%3",
+			expectedErr: "invalid custom delimiter \"[*][%]\": must be a single character",
+		},
+		{
+			name:        "empty input",
+			input:       "",
+			expectedErr: "",
+		},
+		{
+			name:        "delimiter not at start",
+			input:       "1,2//*\n3*4",
+			expectedErr: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := handleCustomDelimiter(test.input)
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

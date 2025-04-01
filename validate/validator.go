@@ -2,8 +2,10 @@ package validate
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"challenge-calculator/logger"
 
@@ -14,6 +16,11 @@ var inputDelimiter = []rune{',', '\n'}
 
 func ValidateInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input validation: %s", input))
+
+	err := handleCustomDelimiter(input)
+	if err != nil {
+		return nil, err
+	}
 
 	sanitizedValues, err := sanitizeInput(input)
 	if err != nil {
@@ -46,6 +53,36 @@ func sanitizeInput(input string) ([]decimal.Decimal, error) {
 
 	logger.Debug(fmt.Sprintf("Input sanitization completed: %v", sanitizedValues))
 	return sanitizedValues, nil
+}
+
+func handleCustomDelimiter(input string) error {
+	hasCustomDelimiter, customDelimiter, err := checkForCustomDelimiter(input)
+	if err != nil {
+		return err
+	}
+
+	if hasCustomDelimiter {
+		inputDelimiter = append(inputDelimiter, customDelimiter)
+	}
+
+	return nil
+}
+
+func checkForCustomDelimiter(input string) (bool, rune, error) {
+	// Defined as a single character at the start of the input in this format: //{delimiter}\n
+	re := regexp.MustCompile(`^//(.+)\n`)
+	match := re.FindStringSubmatch(input)
+
+	if len(match) <= 1 {
+		return false, 0, nil
+	}
+
+	delimiterStr := match[1]
+	if utf8.RuneCountInString(delimiterStr) != 1 {
+		return false, 0, fmt.Errorf("invalid custom delimiter %q: must be a single character", delimiterStr)
+	}
+
+	return true, []rune(delimiterStr)[0], nil
 }
 
 func splitInput(input string) []string {
