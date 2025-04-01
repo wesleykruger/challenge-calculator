@@ -1,29 +1,29 @@
 package validate
 
 import (
-	"errors"
 	"fmt"
-	"regexp"
-	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"challenge-calculator/logger"
 
 	"github.com/shopspring/decimal"
 )
 
-var inputDelimiter = []rune{',', '\n'}
+var defaultDelimiters = []string{",", "\n"}
+var customDelimiters []string
 
 func ValidateInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input validation: %s", input))
 
-	err := handleCustomDelimiter(input)
+	// Reset custom delimiters for each validation
+	customDelimiters = nil
+
+	modifiedInput, err := processCustomDelimiters(input)
 	if err != nil {
 		return nil, err
 	}
 
-	sanitizedValues, err := sanitizeInput(input)
+	sanitizedValues, err := sanitizeInput(modifiedInput)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +34,55 @@ func ValidateInput(input string) ([]decimal.Decimal, error) {
 	}
 
 	return sanitizedValues, nil
+}
+
+func processCustomDelimiters(input string) (string, error) {
+	if !strings.HasPrefix(input, "//") {
+		return input, nil
+	}
+
+	delimiterEnd := strings.Index(input, "\n")
+	if delimiterEnd == -1 {
+		return input, nil
+	}
+
+	// Extract the delimiter definition part (without the //)
+	delimiterDef := input[2:delimiterEnd]
+
+	if strings.HasPrefix(delimiterDef, "[") {
+		startIdx := 0
+		for startIdx < len(delimiterDef) {
+			openBracket := strings.IndexRune(delimiterDef[startIdx:], '[')
+			if openBracket == -1 {
+				break
+			}
+			openBracket += startIdx
+
+			closeBracket := strings.IndexRune(delimiterDef[openBracket:], ']')
+			if closeBracket == -1 {
+				return input, fmt.Errorf("invalid delimiter format: missing closing bracket")
+			}
+			closeBracket += openBracket
+
+			// Extract the delimiter between brackets
+			if closeBracket-openBracket > 1 {
+				delimiter := delimiterDef[openBracket+1 : closeBracket]
+				if delimiter != "" {
+					customDelimiters = append(customDelimiters, delimiter)
+				}
+			}
+
+			startIdx = closeBracket + 1
+		}
+	} else {
+		if len(delimiterDef) != 1 {
+			return input, fmt.Errorf("invalid custom delimiter: %q", delimiterDef)
+		}
+		customDelimiters = append(customDelimiters, delimiterDef)
+	}
+
+	// Return the input with delimiter definition removed
+	return input[delimiterEnd+1:], nil
 }
 
 func sanitizeInput(input string) ([]decimal.Decimal, error) {
@@ -56,57 +105,29 @@ func sanitizeInput(input string) ([]decimal.Decimal, error) {
 	return sanitizedValues, nil
 }
 
-func handleCustomDelimiter(input string) error {
-	hasCustomDelimiter, customDelimiter, err := checkForCustomDelimiter(input)
-	if err != nil {
-		return err
-	}
-
-	if hasCustomDelimiter {
-		inputDelimiter = append(inputDelimiter, customDelimiter)
-	}
-
-	return nil
-}
-
-func checkForCustomDelimiter(input string) (bool, rune, error) {
-	// Match bracketed format: //[<delimiter>]\n
-	bracketed := regexp.MustCompile(`^//\[(.+)\]\n`)
-	if match := bracketed.FindStringSubmatch(input); len(match) == 2 {
-		if match[1] == "" {
-			return false, 0, errors.New("custom delimiter cannot be empty")
-		}
-		return true, []rune(match[1])[0], nil
-	}
-
-	// Match single-char format: //{delimiter}\n
-	re := regexp.MustCompile(`^//(.+)\n`)
-	match := re.FindStringSubmatch(input)
-
-	if len(match) <= 1 {
-		return false, 0, nil
-	}
-
-	delimiterStr := match[1]
-	if utf8.RuneCountInString(delimiterStr) != 1 {
-		return false, 0, fmt.Errorf("invalid custom delimiter %q", delimiterStr)
-	}
-
-	return true, []rune(delimiterStr)[0], nil
-}
-
 func splitInput(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
-	parts := strings.FieldsFunc(trimmedInput, func(r rune) bool {
-		return slices.Contains(inputDelimiter, r)
-	})
+	result := trimmedInput
 
-	// Trim whitespace from each part
-	for i, part := range parts {
-		parts[i] = strings.TrimSpace(part)
+	allDelimiters := append([]string{}, customDelimiters...)
+	allDelimiters = append(allDelimiters, defaultDelimiters...)
+
+	separator := ","
+	for _, delimiter := range allDelimiters {
+		result = strings.ReplaceAll(result, delimiter, separator)
 	}
 
-	return parts
+	parts := strings.Split(result, separator)
+	var cleanParts []string
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			cleanParts = append(cleanParts, trimmed)
+		}
+	}
+
+	return cleanParts
 }
 
 func parseDecimal(val string) decimal.Decimal {
