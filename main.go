@@ -31,7 +31,6 @@ func main() {
 		}
 
 		logger.UserMsg(result)
-		os.Exit(0)
 	}
 
 	if err := scanner.Err(); err != nil {
