@@ -138,6 +138,9 @@ func TestValidateInput(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Set the default delimiter for this test, since no flag is provided
+			SetDefaultDelimiter("\n")
+
 			result, err := ValidateInput(test.input)
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)
@@ -388,6 +391,9 @@ func TestSplitInput(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Set custom delimiters for this test
 			customDelimiters = test.delims
+
+			// Set the default delimiter for this test, since no flag is provided
+			SetDefaultDelimiter("\n")
 			result := splitInput(test.input)
 			assert.Equal(t, test.expected, result)
 		})
@@ -678,6 +684,129 @@ func TestProcessCustomDelimiters(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedInput, result)
 				assert.Equal(t, test.expectedDelims, customDelimiters)
+			}
+		})
+	}
+}
+
+func TestSetDefaultDelimiter(t *testing.T) {
+	tests := []struct {
+		name           string
+		delimiter      string
+		expectedDelims []string
+	}{
+		{
+			name:           "set newline delimiter",
+			delimiter:      "\n",
+			expectedDelims: []string{",", "\n"},
+		},
+		{
+			name:           "set semicolon delimiter",
+			delimiter:      ";",
+			expectedDelims: []string{",", ";"},
+		},
+		{
+			name:           "set tab delimiter",
+			delimiter:      "\t",
+			expectedDelims: []string{",", "\t"},
+		},
+		{
+			name:           "set empty delimiter",
+			delimiter:      "",
+			expectedDelims: []string{",", ""},
+		},
+		{
+			name:           "set multiple character delimiter",
+			delimiter:      "||",
+			expectedDelims: []string{",", "||"},
+		},
+		{
+			name:           "set special character delimiter",
+			delimiter:      "\\n",
+			expectedDelims: []string{",", "\\n"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Reset defaultDelimiters to initial state before each test
+			defaultDelimiters = []string{","}
+
+			SetDefaultDelimiter(test.delimiter)
+			assert.Equal(t, test.expectedDelims, defaultDelimiters,
+				"Expected delimiters %v, got %v", test.expectedDelims, defaultDelimiters)
+		})
+	}
+}
+
+func TestAllowNegatives(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		allowNegatives bool
+		expected       []decimal.Decimal
+		expectedErr    string
+	}{
+		{
+			name:           "negative numbers allowed",
+			input:          "1,-2,3,-4",
+			allowNegatives: true,
+			expected: []decimal.Decimal{
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(-2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(-4),
+			},
+			expectedErr: "",
+		},
+		{
+			name:           "negative numbers not allowed",
+			input:          "1,-2,3,-4",
+			allowNegatives: false,
+			expected:       nil,
+			expectedErr:    "invalid input: negative numbers found: -2, -4",
+		},
+		{
+			name:           "all positive numbers",
+			input:          "1,2,3,4",
+			allowNegatives: false,
+			expected: []decimal.Decimal{
+				decimal.NewFromInt(1),
+				decimal.NewFromInt(2),
+				decimal.NewFromInt(3),
+				decimal.NewFromInt(4),
+			},
+			expectedErr: "",
+		},
+		{
+			name:           "single negative number",
+			input:          "-1",
+			allowNegatives: false,
+			expected:       nil,
+			expectedErr:    "invalid input: negative numbers found: -1",
+		},
+		{
+			name:           "single negative number allowed",
+			input:          "-1",
+			allowNegatives: true,
+			expected:       []decimal.Decimal{decimal.NewFromInt(-1)},
+			expectedErr:    "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Reset state before each test
+			defaultDelimiters = []string{","}
+			SetDefaultDelimiter("\n")
+			SetAllowNegatives(test.allowNegatives)
+
+			result, err := ValidateInput(test.input)
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expected, result)
 			}
 		})
 	}

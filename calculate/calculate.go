@@ -10,7 +10,11 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const maxValidNumber = 1000
+var maxValidNumber = decimal.NewFromInt(1000)
+
+func SetMaxValidNumber(max int64) {
+	maxValidNumber = decimal.NewFromInt(max)
+}
 
 func Add(input string) (string, error) {
 	logger.Debug(fmt.Sprintf("Starting addition calculation for input: %s", input))
@@ -46,5 +50,5 @@ func Add(input string) (string, error) {
 }
 
 func numberExceedsMaxValue(number decimal.Decimal) bool {
-	return number.GreaterThan(decimal.NewFromInt(maxValidNumber))
+	return number.GreaterThan(maxValidNumber)
 }

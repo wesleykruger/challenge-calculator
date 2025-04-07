@@ -9,8 +9,19 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var defaultDelimiters = []string{",", "\n"}
-var customDelimiters []string
+var (
+	defaultDelimiters = []string{","}
+	customDelimiters  []string
+	allowNegatives    bool
+)
+
+func SetDefaultDelimiter(delimiter string) {
+	defaultDelimiters = append(defaultDelimiters[:1], delimiter)
+}
+
+func SetAllowNegatives(allow bool) {
+	allowNegatives = allow
+}
 
 func ValidateInput(input string) ([]decimal.Decimal, error) {
 	logger.Debug(fmt.Sprintf("Starting input validation: %s", input))
@@ -28,9 +39,11 @@ func ValidateInput(input string) ([]decimal.Decimal, error) {
 		return nil, err
 	}
 
-	negativeNumbers := findNegativeNumbers(sanitizedValues)
-	if len(negativeNumbers) > 0 {
-		return nil, fmt.Errorf("invalid input: negative numbers found: %s", strings.Join(negativeNumbers, ", "))
+	if !allowNegatives {
+		negativeNumbers := findNegativeNumbers(sanitizedValues)
+		if len(negativeNumbers) > 0 {
+			return nil, fmt.Errorf("invalid input: negative numbers found: %s", strings.Join(negativeNumbers, ", "))
+		}
 	}
 
 	return sanitizedValues, nil

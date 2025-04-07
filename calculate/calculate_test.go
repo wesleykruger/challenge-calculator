@@ -1,6 +1,7 @@
 package calculate
 
 import (
+	"challenge-calculator/validate"
 	"testing"
 
 	"github.com/shopspring/decimal"
@@ -156,6 +157,9 @@ func TestAdd(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Set the default delimiter for this test, since no flag is provided
+			validate.SetDefaultDelimiter("\n")
+
 			result, err := Add(test.input)
 			if test.expectedErr {
 				assert.Error(t, err)
@@ -234,6 +238,76 @@ func TestNumberExceedsMaxValue(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := numberExceedsMaxValue(test.input)
 			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestMaxNumber(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		maxNumber   int64
+		expected    string
+		expectedErr string
+	}{
+		{
+			name:        "default max number (1000)",
+			input:       "1,1001,2",
+			maxNumber:   1000,
+			expected:    "1+0+2 = 3",
+			expectedErr: "",
+		},
+		{
+			name:        "higher max number",
+			input:       "1,1001,2",
+			maxNumber:   2000,
+			expected:    "1+1001+2 = 1004",
+			expectedErr: "",
+		},
+		{
+			name:        "lower max number",
+			input:       "1,100,2",
+			maxNumber:   50,
+			expected:    "1+0+2 = 3",
+			expectedErr: "",
+		},
+		{
+			name:        "max number equals input",
+			input:       "1,1000,2",
+			maxNumber:   1000,
+			expected:    "1+1000+2 = 1003",
+			expectedErr: "",
+		},
+		{
+			name:        "all numbers exceed max",
+			input:       "1001,1002,1003",
+			maxNumber:   1000,
+			expected:    "0+0+0 = 0",
+			expectedErr: "",
+		},
+		{
+			name:        "negative max number",
+			input:       "-1,-2,-3",
+			maxNumber:   -1,
+			expected:    "-1+-2+-3 = -6",
+			expectedErr: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			SetMaxValidNumber(test.maxNumber)
+			if test.maxNumber == -1 {
+				validate.SetAllowNegatives(true)
+			}
+
+			result, err := Add(test.input)
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expected, result)
+			}
 		})
 	}
 }
