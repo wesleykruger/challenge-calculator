@@ -30,7 +30,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		logger.UserMsg(result.String())
+		logger.UserMsg(result)
 		os.Exit(0)
 	}
 

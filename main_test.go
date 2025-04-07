@@ -6,7 +6,6 @@ import (
 	"challenge-calculator/calculate"
 	"challenge-calculator/logger"
 
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,37 +28,37 @@ func TestMainFunctionality(t *testing.T) {
 		tests := []struct {
 			name        string
 			input       string
-			expected    decimal.Decimal
+			expected    string
 			expectedErr bool
 		}{
 			{
 				name:        "simple addition",
 				input:       "1,2",
-				expected:    decimal.NewFromInt(3),
+				expected:    "1+2 = 3",
 				expectedErr: false,
 			},
 			{
 				name:        "single number",
 				input:       "5",
-				expected:    decimal.NewFromInt(5),
+				expected:    "5 = 5",
 				expectedErr: false,
 			},
 			{
 				name:        "empty input",
 				input:       "",
-				expected:    decimal.Zero,
+				expected:    "0 = 0",
 				expectedErr: false,
 			},
 			{
 				name:        "many numbers",
 				input:       "1,2,3",
-				expected:    decimal.NewFromInt(6),
+				expected:    "1+2+3 = 6",
 				expectedErr: false,
 			},
 			{
 				name:        "invalid numbers",
 				input:       "abc,def",
-				expected:    decimal.Zero,
+				expected:    "0+0 = 0",
 				expectedErr: false,
 			},
 		}

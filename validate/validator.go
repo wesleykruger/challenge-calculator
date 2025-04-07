@@ -124,6 +124,8 @@ func splitInput(input string) []string {
 		trimmed := strings.TrimSpace(part)
 		if trimmed != "" {
 			cleanParts = append(cleanParts, trimmed)
+		} else {
+			cleanParts = append(cleanParts, "0")
 		}
 	}
 

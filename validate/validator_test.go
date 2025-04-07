@@ -41,13 +41,13 @@ func TestValidateInput(t *testing.T) {
 		{
 			name:        "multiple newlines",
 			input:       "1\n\n2",
-			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(0), decimal.NewFromInt(2)},
 			expectedErr: "",
 		},
 		{
 			name:        "newline with empty lines",
 			input:       "1\n\n2\n",
-			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(0), decimal.NewFromInt(2)},
 			expectedErr: "",
 		},
 		{
@@ -95,19 +95,19 @@ func TestValidateInput(t *testing.T) {
 		{
 			name:        "missing first number",
 			input:       ",12",
-			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(0), decimal.NewFromInt(12)},
 			expectedErr: "",
 		},
 		{
 			name:        "missing second number",
 			input:       "12,",
-			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(12), decimal.NewFromInt(0)},
 			expectedErr: "",
 		},
 		{
 			name:        "missing both numbers",
 			input:       ",",
-			expected:    nil,
+			expected:    []decimal.Decimal{decimal.NewFromInt(0), decimal.NewFromInt(0)},
 			expectedErr: "",
 		},
 		{
@@ -183,13 +183,13 @@ func TestSanitizeInput(t *testing.T) {
 		{
 			name:        "multiple newlines",
 			input:       "1\n\n2",
-			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(0), decimal.NewFromInt(2)},
 			expectedErr: nil,
 		},
 		{
 			name:        "newline with empty lines",
 			input:       "1\n\n2\n",
-			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(2)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(1), decimal.NewFromInt(0), decimal.NewFromInt(2)},
 			expectedErr: nil,
 		},
 		{
@@ -237,19 +237,19 @@ func TestSanitizeInput(t *testing.T) {
 		{
 			name:        "missing first number",
 			input:       ",12",
-			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(0), decimal.NewFromInt(12)},
 			expectedErr: nil,
 		},
 		{
 			name:        "missing second number",
 			input:       "12,",
-			expected:    []decimal.Decimal{decimal.NewFromInt(12)},
+			expected:    []decimal.Decimal{decimal.NewFromInt(12), decimal.NewFromInt(0)},
 			expectedErr: nil,
 		},
 		{
 			name:        "missing both numbers",
 			input:       ",",
-			expected:    nil,
+			expected:    []decimal.Decimal{decimal.NewFromInt(0), decimal.NewFromInt(0)},
 			expectedErr: nil,
 		},
 		{
@@ -308,25 +308,25 @@ func TestSplitInput(t *testing.T) {
 			name:     "empty string",
 			input:    "",
 			delims:   nil,
-			expected: []string(nil),
+			expected: []string{"0"},
 		},
 		{
 			name:     "missing first number",
 			input:    ",12",
 			delims:   nil,
-			expected: []string{"12"},
+			expected: []string{"0", "12"},
 		},
 		{
 			name:     "missing second number",
 			input:    "12,",
 			delims:   nil,
-			expected: []string{"12"},
+			expected: []string{"12", "0"},
 		},
 		{
 			name:     "missing both numbers",
 			input:    ",",
 			delims:   nil,
-			expected: []string(nil),
+			expected: []string{"0", "0"},
 		},
 		{
 			name:     "whitespace handling",
@@ -374,13 +374,13 @@ func TestSplitInput(t *testing.T) {
 			name:     "consecutive delimiters",
 			input:    "1,,2",
 			delims:   nil,
-			expected: []string{"1", "2"},
+			expected: []string{"1", "0", "2"},
 		},
 		{
 			name:     "delimiter at start and end",
 			input:    ",1,2,",
 			delims:   nil,
-			expected: []string{"1", "2"},
+			expected: []string{"0", "1", "2", "0"},
 		},
 	}
 
